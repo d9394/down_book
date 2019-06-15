@@ -1,4 +1,5 @@
 这是一个模拟在epubee网站上下载电子书的代码（这是一个Fork过来的项目基础上修改的）
+其中参考了另一个项目：https://github.com/Hxiaodou/kindleTool/blob/master/kindletool/epubee.py
 
 ip.txt是IP代理地址，可以从另一个github项目中扫描得到PrxGetter
 
