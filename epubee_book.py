@@ -339,7 +339,7 @@ def main():
 	#bs指定搜索结果前N项添加入书库
 	bs = 3
 	#eid,epwd指定用户email及密码(已经设置了Email或Name，不能用ID登录.)
-	email="9394952@163.com"
+	email="xxxxxx@163.com"
 	epwd=""
 	
 	try:
