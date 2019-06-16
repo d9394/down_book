@@ -28,6 +28,16 @@ def getSessionid():
 	name, value = str.split(';')[0].split('=')
 	return value
 
+def update_cookies(data_json):
+	data = (json.loads(data_json))['d'][0]
+	cookie['identify'] = data.get('ID')
+	cookie['identifyusername'] = data.get('UserName')
+	cookie['user_localid'] = data.get('Name')
+	cookie['uemail'] = data.get('email')
+	cookie['kindle_email'] = data.get('kindle_email')
+	cookie['isVip'] = '1'
+	cookie['leftshow']='1'
+	return
 
 def getCookie(proxy):
 	print(u'开始获取cookie')
@@ -49,15 +59,8 @@ def getCookie(proxy):
 	#	 print("获取cookie失败！")
 
 	response = requests.post(url, json=data, cookies=cookie, proxies=proxy)
-	data = (json.loads(response.content.decode()))['d'][0]
-	cookie['identify'] = data.get('ID')
-	cookie['identifyusername'] = data.get('UserName')
-	cookie['user_localid'] = data.get('Name')
-	cookie['uemail'] = data.get('email')
-	cookie['kindle_email'] = data.get('kindle_email')
-	cookie['isVip'] = '1'
-	cookie['leftshow']='1'
-
+	if response.status_code == 200:
+		update_cookies(response.content.decode())
 
 def cookie_toString(cookie):
 	cookie_str=''
@@ -287,6 +290,29 @@ def delete_book(bids, cookie, proxy):
 	page = requests.post(url, headers=header, json=data, proxies=proxy)
 	print(u'request : %s' % data)
 	print(u"册除书本 %s, %s" %( page.status_code, page.content ))
+	
+def do_login(uuid,uupwd, cookie,proxy):
+	print(u'登陆指定用户帐号: %s' % uuid)
+	cookie_str = 'ASP.NET_SessionId='+str(cookie.get('ASP.NET_SessionId'))+'; leftshow=1'
+	data = {'eID':uuid,'userpassword':uupwd}
+	url="http://cn.epubee.com/keys/retrieve_cloud_id.asmx/Retrieve"
+	header = {
+		'Host': 'cn.epubee.com',
+		'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:67.0) Gecko/20100101 Firefox/67.0',
+		'Accept': 'application/json, text/javascript, */*; q=0.01',
+		'Accept-Language': 'zh-CN,en-US;q=0.7,en;q=0.3',
+		'Accept-Encoding': 'gzip, deflate',
+		'Referer': 'http://cn.epubee.com/files.aspx' ,
+		'Content-Type': 'application/json',
+		'X-Requested-With': 'XMLHttpRequest',
+		'Connection': 'keep-alive',
+		'Cookie': cookie_str
+	}
+	response = requests.post(url, headers=header, json=data,proxies=proxy)
+	if response.status_code == 200:
+		update_cookies(response.content.decode())
+		print(u'登陆%s帐号成功' % uuid)
+	return
 
 def main():
 	print time.strftime( "%Y%m%d-%H%M%S", time.localtime(time.time()))
@@ -302,56 +328,69 @@ def main():
 	#loc='F:\\资料\\电子书\\kindle\\'
 	loc = '/root/down_book/'
 	# 下载地址---F:\资料\电子书\kindle\   KxrbnqbpG9yIpkxWSozxtw%3d%3d
-	
-	book_name = "程序员的数学思维修炼（趣味解读）"
+	#book_name指定书名
+#	book_name = "程序员的数学思维修炼（趣味解读）"
+	book_name = ""
 	book_type = ".mobi"
+	#bs指定搜索结果前N项添加入书库
+	bs = 3
+	#eid,epwd指定用户email及密码(已经设置了Email或Name，不能用ID登录.)
+	email="9394952@163.com"
+	epwd=""
 	
 	try:
 		ip = random.choice(iplist)
 		proxy={'http':ip,'https':ip}
 		print(u'代理IP: %s' % proxy.get('http'))
 		getCookie(proxy)
-		uid = str(cookie.get('identify'))
-		print(u'用户: %s' % uid.encode('utf-8'))
+		if email <> "" :
+			if 'uemail' in cookie :
+				if str(cookie.get('uemail')) <> email :
+					#重新登陆指定用户
+					do_login( email, epwd, cookie, proxy )
+			else:
+				do_login(email, epwd, cookie, proxy)
+		print(u'用户: %s' % str(cookie.get('identify')))
 		time.sleep(1)
 	except Exception as e:
 		print("error %s" % e)
 	else:
-#		获取图书测试
-		search_result = getSearchList(book_name, proxy)
-		#bookid = str(input(u'请输入：'))
-		bookid = get_book_id(search_result, book_type)
-		if len(bookid) > 0:
-			bs = 3
-			for bb in range(3) :
-				try:
-					bid = bookid[bb]
-					addbook = add_Book(cookie, bid,proxy)
-					time.sleep(3)
-				except :
-					break
-			if addbook == 200 :
-				books_list = getBookList(cookie,proxy)
-				del_list = ""
-				if len(books_list) > 0 :
-					print(u'书库数量: %s' % len(books_list) )
-					for bl in range(len(books_list)):
-						filename = books_list[bl]['filename']
-						bid = books_list[bl]['bid']
-						file_size =  books_list[bl]['filesize']
-						print(u'开始下载 : %s, (%s), %s' % (filename, file_size, bid))
-						if download(filename,bid,cookie,loc,proxy, file_size) > 0 :
-							print(u'done! %s' % filename)
-							del_list = del_list + bid + ","
-						else :
-							print(u'下载失败 : %s' % filename)
-				else:
-					print(u'书库没有书')
-				if len(del_list)>0 :
-					del_list = "0," + del_list[:-1]
-					delete_book(del_list,cookie,proxy)
-			else :
-				print(u'添加书库错误 %s' % addbook)
+		if book_name <> "" :
+#			获取图书测试
+			search_result = getSearchList(book_name, proxy)
+			#bookid = str(input(u'请输入：'))
+			bookid = get_book_id(search_result, book_type)
+			if len(bookid) > 0:
 
+				for bb in range(3) :
+					try:
+						bid = bookid[bb]
+						addbook = add_Book(cookie, bid,proxy)
+						time.sleep(3)
+					except :
+						print(u'添加书库错误 (%s), %s' % (addbook,bid))
+						break
+		#取书库列表
+		books_list = getBookList(cookie,proxy)
+		del_list = ""
+		if len(books_list) > 0 :
+			print(u'书库数量: %s' % len(books_list) )
+			for bl in range(len(books_list)):
+				filename = books_list[bl]['filename']
+				bid = books_list[bl]['bid']
+				file_size =  books_list[bl]['filesize']
+				print(u'开始下载 : %s, (%s), %s' % (filename, file_size, bid))
+				if download(filename,bid,cookie,loc,proxy, file_size) > 0 :
+					print(u'done! %s' % filename)
+					del_list = del_list + bid + ","
+				else :
+					print(u'下载失败 : %s' % filename)
+		else:
+			print(u'书库没有书')
+		if len(del_list)>0 :
+			del_list = "0," + del_list[:-1]
+			delete_book(del_list,cookie,proxy)
+	print(u'程序完成')
+	
 if __name__ == '__main__':
 	main()
