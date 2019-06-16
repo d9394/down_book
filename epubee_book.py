@@ -186,7 +186,7 @@ def refreshpage(cookie, proxy):
 		'Upgrade-Insecure-Requests': '1',
 	}
 	response = requests.get(url, headers=header, proxies=proxy)
-#	print(respnse.content)
+#	print(response.content)
 
 def download(filename, bid, cookie,loc,proxy, size):
 	retry_times = 1
@@ -207,30 +207,34 @@ def download(filename, bid, cookie,loc,proxy, size):
 	}
 	while retry_times > 0:
 		retry_times -= 1
-		down = requests.get(url, headers=header,proxies=proxy).content
-		if down.find("Ctrl+F5") :
-			refreshpage(cookie, proxy)
-#			print(down)
-			time.sleep(3)
-			continue
+		response = requests.get(url, headers=header,proxies=proxy)
+		if response.status_code==200:
+			down = response.content
+			if down.find("Ctrl+F5") :
+				print(u'%s' % down)
+				refreshpage(cookie, proxy)
+				time.sleep(3)
+				continue
 
-		if size[-1:]=='K' :
-			act_size=int(len(down)/1024)
-			size=size[:-1]
-		else :
-			if size[-1:]=='M' :
-				act_size=int(len(down)/1024/1024)
+			if size[-1:]=='K' :
+				act_size=int(len(down)/1024)
 				size=size[:-1]
+			else :
+				if size[-1:]=='M' :
+					act_size=int(len(down)/1024/1024)
+					size=size[:-1]
+				else:
+					act_size=len(down)
+			if abs(act_size/size - 1) > 0.1 :
+				print(u'文件大小有误')
+				continue
 			else:
-				act_size=len(down)
-		if abs(act_size/size - 1) > 0.1 :
-			print(u'文件大小有误')
-			continue
+				with open(filename, 'wb')as code:
+					code.write(down)
+				print(u'下载完成')
+				break
 		else:
-			with open(filename, 'wb')as code:
-				code.write(down)
-			print(u'下载完成')
-			break
+			print(u'下载错误 (%s): %s' %(response.status_code, response.content))
 	return retry_times
 
 def getSearchList(search_book_name, proxy):
@@ -343,6 +347,7 @@ def main():
 		proxy={'http':ip,'https':ip}
 		print(u'代理IP: %s' % proxy.get('http'))
 		getCookie(proxy)
+		print(u'当前uid是: %s' % cookie.get('identify'))
 		if email <> "" :
 			if 'uemail' in cookie :
 				if str(cookie.get('uemail')) <> email :
@@ -385,9 +390,13 @@ def main():
 					del_list = del_list + bid + ","
 				else :
 					print(u'下载失败 : %s' % filename)
-		else:
+		else :
 			print(u'书库没有书')
 		if len(del_list)>0 :
+			print(u'通过邮件发送到: %s(Building....)' % cookie.get('uemail'))
+			
+		if len(del_list)>0 :
+			#删除下载成功的书
 			del_list = "0," + del_list[:-1]
 			delete_book(del_list,cookie,proxy)
 	print(u'程序完成')
