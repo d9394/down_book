@@ -74,7 +74,7 @@ def add_Book(cookie, bookid, proxy):
 	act = 'search'
 	url = u'http://cn.epubee.com/app_books/addbook.asmx/online_addbook'
 	data = {'bookid': bookid, 'uid': uid, 'act': act}
-	my_header = header
+	my_header = headers
 	my_header['Cookie'] = cookie_str
 	my_header['Connection'] = 'keep-alive'
 	my_header['Content-Type'] = 'application/json'
@@ -99,7 +99,7 @@ def getBookList(cookie,proxy):
 	uid = str(cookie.get('identify'))
 	url = u'http://cn.epubee.com/files.aspx?userid=' + uid
 	cookie_str = cookie_toString(cookie)
-	my_header = header
+	my_header = headers
 	my_header['Cookie'] = cookie_str
 	my_header['Referer' ] = 'http://cn.epubee.com/files.aspx'
 	# try:
@@ -154,7 +154,7 @@ def refreshpage(cookie, proxy):
 #	uid = str(cookie.get('identify'))
 #	t_key = gett_key(bid,proxy)
 	url = u'http://cn.epubee.com/files.aspx'
-	my_header = header
+	my_header = headers
 	my_header['Cookie'] = cookie_str
 	try:
 		response = requests.get(url, headers=my_header, proxies=proxy)
@@ -211,7 +211,7 @@ def getSearchList(search_book_name, proxy):
 	url='http://cn.epubee.com/keys/get_ebook_list_search.asmx/getSearchList'
 	data={'skey':search_book_name}
 	cookie_str = cookie_toString(cookie)
-	my_header = header
+	my_header = headers
 	my_header['Cookie'] = cookie_str
 	try:
 		response = requests.post(url,headers=my_header,json=data, proxies=proxy)
@@ -245,7 +245,7 @@ def delete_book(bids, cookie, proxy):
 #			print(u'bids : %s' % bids)
 	data = {'uid': uid, 'bids': bids}
 	url = u'http://cn.epubee.com/app_books/deletemybooks.asmx/deletemybooks'
-	my_header = header
+	my_header = headers
 	my_header['Cookie'] = cookie_str
 	my_header['Referer'] = 'http://cn.epubee.com/files.aspx'
 	try:
