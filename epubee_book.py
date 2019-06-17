@@ -12,8 +12,18 @@ import time
 #from spider import myipAgent
 
 headers = {
+	'Host': 'cn.epubee.com',
 	'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; rv:52.0) Gecko/20100101 Firefox/52.0',
+	'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+	'Accept-Language': 'en-US,en;q=0.5',
+	'Accept-Encoding': 'gzip, deflate',
+	'X-Requested-With': 'XMLHttpRequest',
+	'Connection': 'keep-alive',
+	'Upgrade-Insecure-Requests': '1',
+	'Pragma': 'no-cache',
+	'Cache-Control': 'max-age=0 '
 }
+
 cookie = {}
 
 def choiceIP(ip_pool):
@@ -44,23 +54,12 @@ def getCookie(proxy):
 	cookie['ASP.NET_SessionId'] = getSessionid()
 	url = u'http://cn.epubee.com//keys/genid_with_localid.asmx/genid_with_localid'
 	data = {'localid': ''}
-
-	# try:
-	#	 response = requests.post(url, json=data, cookies=cookie, proxies=proxy)
-	#	 data = (json.loads(response.content.decode()))['d'][0]
-	#	 cookie['identify'] = data.get('ID')
-	#	 cookie['identifyusername'] = data.get('UserName')
-	#	 cookie['user_localid'] = data.get('Name')
-	#	 cookie['uemail'] = data.get('email')
-	#	 cookie['kindle_email'] = data.get('kindle_email')
-	#	 cookie['isVip'] = '1'
-	#	 cookie['leftshow']='1'
-	# except:
-	#	 print("获取cookie失败！")
-
-	response = requests.post(url, json=data, cookies=cookie, proxies=proxy)
-	if response.status_code == 200:
-		update_cookies(response.content.decode())
+	try:
+		response = requests.post(url, json=data, cookies=cookie, proxies=proxy)
+		if response.status_code == 200:
+			update_cookies(response.content.decode())
+	except Exception as e:
+		print(u"获取cookie失败！")
 
 def cookie_toString(cookie):
 	cookie_str=''
@@ -75,36 +74,24 @@ def add_Book(cookie, bookid, proxy):
 	act = 'search'
 	url = u'http://cn.epubee.com/app_books/addbook.asmx/online_addbook'
 	data = {'bookid': bookid, 'uid': uid, 'act': act}
-	header = {
-		'Host': 'cn.epubee.com',
-		'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; rv:52.0) Gecko/20100101 Firefox/52.0',
-		'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-		'Accept-Language': 'en-US,en;q=0.5',
-		'Accept-Encoding': 'gzip, deflate',
-		'Content-Type': 'application/json',
-		'Cookie': cookie_str,
-		'X-Requested-With': 'XMLHttpRequest',
-		'Connection': 'keep-alive'
-	}
-	# try:
-	#	 response = requests.post(url,headers=header,json=data,proxies=proxy)
-	#	 if response.status_code!=200:
-	#		 print('书本加入失败')
-	#	 else:
-	#		 print('书本加入成功')
-	# except:
-	#	 print('书本加入失败\n')
-
-	response = requests.post(url, headers=header, json=data, proxies=proxy)
-	if response.status_code != 200:
+	my_header = header
+	my_header['Cookie'] = cookie_str
+	my_header['Connection'] = 'keep-alive'
+	my_header['Content-Type'] = 'application/json'
+	try:
+		response = requests.post(url, headers=my_header, json=data, proxies=proxy)
+		if response.status_code != 200:
+			print(u'书本加入失败')
+			print(u'response : %s' % response)
+			print(u'req %s\ndata : %s' %(url, data))
+		else:
+			print(u'书本加入成功, bid=%s' % bookid)
+			print(u'%s' % response.content)
+	except Exception as e:
 		print(u'书本加入失败')
 		print(u'response : %s' % response)
 		print(u'req %s\ndata : %s' %(url, data))
-	else:
-		print(u'书本加入成功, bid=%s' % bookid)
-		print(u'%s' % response.content)
 	return response.status_code
-
 
 def getBookList(cookie,proxy):
 	books = []
@@ -112,18 +99,9 @@ def getBookList(cookie,proxy):
 	uid = str(cookie.get('identify'))
 	url = u'http://cn.epubee.com/files.aspx?userid=' + uid
 	cookie_str = cookie_toString(cookie)
-	header = {
-		'Host': 'cn.epubee.com',
-		'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; rv:52.0) Gecko/20100101 Firefox/52.0',
-		'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-		'Accept-Language': 'en-US,en;q=0.5',
-		'Accept-Encoding': 'gzip, deflate',
-		'Cookie': cookie_str,
-		'Connection': 'keep-alive',
-		'Upgrade-Insecure-Requests': '1',
-		'Pragma': 'no-cache',
-		'Cache-Control': 'max-age=0 ',
-	}
+	my_header = header
+	my_header['Cookie'] = cookie_str
+	my_header[']
 	# try:
 	#	 req = requests.get(url, headers=header,proxies=proxy)
 	#	 if req.status_code==200:
@@ -140,7 +118,7 @@ def getBookList(cookie,proxy):
 	#	 print('fail')
 	#	 return
 
-	req = requests.get(url, headers=header, proxies=proxy)
+	req = requests.get(url, headers=my_header, proxies=proxy)
 	if req.status_code == 200:
 #		print(u'add_book result : %s' % req.text)
 		bsObj = BeautifulSoup(req.text, 'html.parser')
@@ -164,8 +142,8 @@ def getBookList(cookie,proxy):
 def gett_key(bid,proxy):
 	url = u'http://cn.epubee.com/app_books/click_key.asmx/getkey'
 	data = {'isVip': 1, 'uid': cookie.get('identify'),'strbid': bid}
-	headers = {'Content-Type': 'application/json'}
-	response = requests.post(url, headers=headers, json=data,proxies=proxy)
+	my_headers = {'Content-Type': 'application/json'}
+	response = requests.post(url, headers=my_headers, json=data,proxies=proxy)
 	dict = json.loads(response.content.decode())
 	t_key=dict.get('d')[0]
 	return t_key
@@ -176,16 +154,12 @@ def refreshpage(cookie, proxy):
 #	uid = str(cookie.get('identify'))
 #	t_key = gett_key(bid,proxy)
 	url = u'http://cn.epubee.com/files.aspx'
-	header = {
-		'Host': 'cn.epubee.com',
-		'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; rv:52.0) Gecko/20100101 Firefox/52.0',
-		'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-		'Accept-Language': 'en-US,en;q=0.5',
-		'Accept-Encoding': 'gzip, deflate',
-		'Cookie': cookie_str,
-		'Upgrade-Insecure-Requests': '1',
-	}
-	response = requests.get(url, headers=header, proxies=proxy)
+	my_header = header
+	my_header['Cookie'] = cookie_str
+	try:
+		response = requests.get(url, headers=my_header, proxies=proxy)
+	except Exception as e:
+		print(u"刷新页面失败: %s" % e)
 #	print(response.content)
 
 def download(filename, bid, cookie,loc,proxy, size):
@@ -195,68 +169,59 @@ def download(filename, bid, cookie,loc,proxy, size):
 	uid = str(cookie.get('identify'))
 	t_key = gett_key(bid,proxy)
 	url = u'http://cn.epubee.com/getFile.ashx?bid=' + bid + u'&uid=' + uid + u'&t_key=' + t_key
-	header = {
-		'Host': 'cn.epubee.com',
-		'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; rv:52.0) Gecko/20100101 Firefox/52.0',
-		'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-		'Accept-Language': 'en-US,en;q=0.5',
-		'Accept-Encoding': 'gzip, deflate',
-		'Cookie': cookie_str,
-		'Upgrade-Insecure-Requests': '1',
-		'Referer': 'http://cn.epubee.com/files.aspx',
-	}
+	my_header = header
+	my_header['Cookie'] = cookie_str
+	my_header['Referer' ] = 'http://cn.epubee.com/files.aspx'
 	while retry_times > 0:
 		retry_times -= 1
-		response = requests.get(url, headers=header,proxies=proxy)
-		if response.status_code==200:
-			down = response.content
-			if down.find("Ctrl+F5") :
-				print(u'%s' % down)
-				refreshpage(cookie, proxy)
-				time.sleep(3)
-				continue
-
-			if size[-1:]=='K' :
-				act_size=int(len(down)/1024)
-				size=size[:-1]
-			else :
-				if size[-1:]=='M' :
-					act_size=int(len(down)/1024/1024)
+		try:
+			response = requests.get(url, headers=my_header,proxies=proxy)
+			if response.status_code==200:
+				down = response.content
+				if down.find("Ctrl+F5") :
+					print(u'%s' % down)
+					refreshpage(cookie, proxy)
+					time.sleep(3)
+					continue
+				if size[-1:]=='K' :
+					act_size=int(len(down)/1024)
 					size=size[:-1]
+				else :
+					if size[-1:]=='M' :
+						act_size=int(len(down)/1024/1024)
+						size=size[:-1]
+					else:
+						act_size=len(down)
+				if abs(act_size/size - 1) > 0.1 :
+					print(u'文件大小有误')
+					continue
 				else:
-					act_size=len(down)
-			if abs(act_size/size - 1) > 0.1 :
-				print(u'文件大小有误')
-				continue
+					with open(filename, 'wb')as code:
+						code.write(down)
+					print(u'下载完成')
+					break
 			else:
-				with open(filename, 'wb')as code:
-					code.write(down)
-				print(u'下载完成')
-				break
-		else:
-			print(u'下载错误 (%s): %s' %(response.status_code, response.content))
+				print(u'下载错误 (%s): %s' %(response.status_code, response.content))
+		except Exception as e:
+			print(u'下载错误 (%s)' % e)
 	return retry_times
 
 def getSearchList(search_book_name, proxy):
-	 dict = []
-	 url='http://cn.epubee.com/keys/get_ebook_list_search.asmx/getSearchList'
-	 data={'skey':search_book_name}
-	 cookie_str = cookie_toString(cookie)
-	 header = {
-		 'Host': 'cn.epubee.com',
-		 'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; rv:52.0) Gecko/20100101 Firefox/52.0',
-		 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-		 'Accept-Language': 'en-US,en;q=0.5',
-		 'Accept-Encoding': 'gzip, deflate',
-		 'Cookie': cookie_str,
-		 'Upgrade-Insecure-Requests': '1',
-	 }
-	 response = requests.post(url,headers=header,json=data, proxies=proxy)
-	 if response.status_code == 200:
-		 dict = json.loads(response.content.decode())['d']
-	 print(len(dict))
-#	 print(dict)
-	 return dict
+	dict = []
+	url='http://cn.epubee.com/keys/get_ebook_list_search.asmx/getSearchList'
+	data={'skey':search_book_name}
+	cookie_str = cookie_toString(cookie)
+	my_header = header
+	my_header['Cookie'] = cookie_str
+	try:
+		response = requests.post(url,headers=my_header,json=data, proxies=proxy)
+		if response.status_code == 200:
+			dict = json.loads(response.content.decode())['d']
+	except Exception as e:
+		print(u'读取搜索出错%s' % e)
+	print(u'搜索结果%s条' % len(dict))
+#	print(dict)
+	return dict
 
 def get_book_id(dict_result, b_type):
 	BID = []
@@ -264,7 +229,6 @@ def get_book_id(dict_result, b_type):
 		for i in range(0, len(dict_result)):
 			if dict_result[i]['Title'].find("["+b_type+"]") > 0:
 				BID.append((dict_result[i]['BID']))
-				
 	return BID
 
 def delete_book(bids, cookie, proxy):
@@ -281,67 +245,60 @@ def delete_book(bids, cookie, proxy):
 #			print(u'bids : %s' % bids)
 	data = {'uid': uid, 'bids': bids}
 	url = u'http://cn.epubee.com/app_books/deletemybooks.asmx/deletemybooks'
-	header = {
-		'Host': 'cn.epubee.com',
-		'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; rv:52.0) Gecko/20100101 Firefox/52.0',
-		'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-		'Accept-Language': 'en-US,en;q=0.5',
-		'Accept-Encoding': 'gzip, deflate',
-		'Cookie': cookie_str,
-		'Upgrade-Insecure-Requests': '1',
-		'Referer': 'http://cn.epubee.com/files.aspx',
-	}
-	page = requests.post(url, headers=header, json=data, proxies=proxy)
-	print(u'request : %s' % data)
-	print(u"册除书本 %s, %s" %( page.status_code, page.content ))
+	my_header = header
+	my_header['Cookie'] = cookie_str
+	my_header['Referer'] = 'http://cn.epubee.com/files.aspx'
+	try:
+		response = requests.post(url, headers=my_header, json=data, proxies=proxy)
+	except Exception as e:
+		print(u'request : %s' % data)
+		print(u'删除书本失败%s' % e)
+	print(u"删除书本 %s, %s" %( response.status_code, response.content ))
 	
 def do_login(uuid,uupwd, cookie,proxy):
 	print(u'登陆指定用户帐号: %s' % uuid)
 	cookie_str = 'ASP.NET_SessionId='+str(cookie.get('ASP.NET_SessionId'))+'; leftshow=1'
 	data = {'eID':uuid,'userpassword':uupwd}
 	url="http://cn.epubee.com/keys/retrieve_cloud_id.asmx/Retrieve"
-	header = {
-		'Host': 'cn.epubee.com',
-		'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:67.0) Gecko/20100101 Firefox/67.0',
-		'Accept': 'application/json, text/javascript, */*; q=0.01',
-		'Accept-Language': 'zh-CN,en-US;q=0.7,en;q=0.3',
-		'Accept-Encoding': 'gzip, deflate',
-		'Referer': 'http://cn.epubee.com/files.aspx' ,
-		'Content-Type': 'application/json',
-		'X-Requested-With': 'XMLHttpRequest',
-		'Connection': 'keep-alive',
-		'Cookie': cookie_str
-	}
-	response = requests.post(url, headers=header, json=data,proxies=proxy)
-	if response.status_code == 200:
-		update_cookies(response.content.decode())
-		print(u'登陆%s帐号成功' % uuid)
+	my_header = header
+	my_header['Cookie'] = cookie_str
+	my_header['Referer'] = 'http://cn.epubee.com/files.aspx'
+	try:
+		response = requests.post(url, headers=my_header, json=data,proxies=proxy)
+		if response.status_code == 200:
+			update_cookies(response.content.decode())
+			print(u'登陆%s帐号成功' % uuid)
+	except Exception as e:
+		print(u'登陆帐号失败%s' % e)
 	return
 
 def main():
 	print time.strftime( "%Y%m%d-%H%M%S", time.localtime(time.time()))
-	path = 'ip.txt'  # 存放爬取ip的文档path
-	with open(path, 'r+') as f:
-		iplist = f.readlines()
-	for i in range(0, len(iplist)):
-		iplist[i] = iplist[i].strip('\n')
-#	iplist = [1]
-#	iplist[0]=''
 
-	# loc=input("请输入存放地址：")
-	#loc='F:\\资料\\电子书\\kindle\\'
+#	loc=input("请输入存放地址：")
+#	loc='F:\\资料\\电子书\\kindle\\'
 	loc = '/root/down_book/'
-	# 下载地址---F:\资料\电子书\kindle\   KxrbnqbpG9yIpkxWSozxtw%3d%3d
-	#book_name指定书名
+#	下载地址---F:\资料\电子书\kindle\   KxrbnqbpG9yIpkxWSozxtw%3d%3d
+#	book_name指定书名
 #	book_name = "程序员的数学思维修炼（趣味解读）"
 	book_name = ""
 	book_type = ".mobi"
-	#bs指定搜索结果前N项添加入书库
+#	bs指定搜索结果前N项添加入书库
 	bs = 3
-	#eid,epwd指定用户email及密码(已经设置了Email或Name，不能用ID登录.)
-	email="xxxxxx@163.com"
+#	eid,epwd指定用户email及密码(已经设置了Email或Name，不能用ID登录.)
+	email="xxxxx@163.com"
 	epwd=""
-	
+
+	path = '/root/down_book/ip.txt'  # 存放爬取ip的文档path，建议为全路径
+	try: 
+		with open(path, 'r+') as f:
+			iplist = f.readlines()
+		for i in range(0, len(iplist)):
+			iplist[i] = iplist[i].strip('\n')
+	except Exception as e:
+		print(u'代理IP读取错误，跳过代理功能')
+		iplist = [1]
+		iplist[0] = ''
 	try:
 		ip = random.choice(iplist)
 		proxy={'http':ip,'https':ip}
@@ -355,7 +312,7 @@ def main():
 					do_login( email, epwd, cookie, proxy )
 			else:
 				do_login(email, epwd, cookie, proxy)
-		print(u'用户: %s' % str(cookie.get('identify')))
+		print(u'用户uid: %s' % str(cookie.get('identify')))
 		time.sleep(1)
 	except Exception as e:
 		print("error %s" % e)
