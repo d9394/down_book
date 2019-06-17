@@ -101,7 +101,7 @@ def getBookList(cookie,proxy):
 	cookie_str = cookie_toString(cookie)
 	my_header = header
 	my_header['Cookie'] = cookie_str
-	my_header[']
+	my_header['Referer' ] = 'http://cn.epubee.com/files.aspx'
 	# try:
 	#	 req = requests.get(url, headers=header,proxies=proxy)
 	#	 if req.status_code==200:
