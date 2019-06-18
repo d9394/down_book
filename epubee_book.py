@@ -60,6 +60,7 @@ def getCookie(proxy):
 			update_cookies(response.content.decode())
 	except Exception as e:
 		print(u"获取cookie失败！")
+	return response.status_code
 
 def cookie_toString(cookie):
 	cookie_str=''
@@ -300,10 +301,12 @@ def main():
 		iplist = [1]
 		iplist[0] = ''
 	try:
-		ip = random.choice(iplist)
-		proxy={'http':ip,'https':ip}
-		print(u'代理IP: %s' % proxy.get('http'))
-		getCookie(proxy)
+		while True:
+			ip = random.choice(iplist)
+			proxy={'http':ip,'https':ip}
+			print(u'代理IP: %s' % proxy.get('http'))
+			if getCookie(proxy) == 200:
+				break
 		print(u'当前uid是: %s' % cookie.get('identify'))
 		if email <> "" :
 			if 'uemail' in cookie :
