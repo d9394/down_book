@@ -374,9 +374,9 @@ def main():
 		else :
 			print(u'书库没有书')
 		if len(done_list)>0 :
-			print(u'通过邮件发送到: %s(Building....)' % cookie.get('uemail'))
 			mailto = mailto + " " cookie.get('kindle_email')  + " " + cookie.get('uemail')
 			mailto = mailto.strip().replace(" ",",").replace(",,", ",")
+			print(u'通过邮件发送到: %s(Building....)' % mailto)
 			for i in done_list.strip().split(' ') :
 				send_mail(mailto, books_list[int(i)]['filename'], loc)
 		if len(done_list)>0 :
