@@ -262,7 +262,7 @@ def delete_book(bids, cookie, proxy):
 #			print(u'bids : %s' % bids)
 	data = {'uid': uid, 'bids': bids}
 	url = u'http://cn.epubee.com/app_books/deletemybooks.asmx/deletemybooks'
-	my_header = header
+	my_header = headers
 	my_header['Cookie'] = cookie_str
 	my_header['Referer'] = 'http://cn.epubee.com/files.aspx'
 	try:
@@ -305,6 +305,8 @@ def main():
 	book_type = ".mobi"
 #	bs指定搜索结果前N项添加入书库
 	bs = 3
+#	mailto指定临时用户邮件发送
+	mailto = 'aaaaabbbbb@kindle.cn'
 #	eid,epwd指定用户email及密码(已经设置了Email或Name，不能用ID登录.)
 	email="3333333333@163.com"      #设置切换登陆的用户名
 	epwd=""                          #设置切换登陆的密
@@ -373,14 +375,13 @@ def main():
 			print(u'书库没有书')
 		if len(done_list)>0 :
 			print(u'通过邮件发送到: %s(Building....)' % cookie.get('uemail'))
+			mailto = mailto + " " cookie.get('kindle_email')  + " " + cookie.get('uemail')
+			mailto = mailto.strip().replace(" ",",").replace(",,", ",")
 			for i in done_list.strip().split(' ') :
-				send_mail(cookie.get('uemail'), books_list[int(i)]['filename'], loc)
+				send_mail(mailto, books_list[int(i)]['filename'], loc)
 		if len(done_list)>0 :
 			#删除下载成功的书
-			del_list = "0,"
-			for i in done_list.strip().split(' ') :
-				del_list = books_list[int(i)]['bid'] + ','
-			delete_book(del_list[:-1],cookie,proxy)
+			delete_book("0," + done_list.strip().replace(' ',','), cookie , proxy)
 	print(u'程序完成')
 	
 if __name__ == '__main__':
