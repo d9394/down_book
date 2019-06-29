@@ -305,7 +305,7 @@ def main():
 	book_type = ".mobi"
 #	bs指定搜索结果前N项添加入书库
 	bs = 3
-#	mailto指定临时用户邮件发送
+#	mailto指定临时用户邮件发送,可留空
 	mailto = 'aaaaabbbbb@kindle.cn'
 #	eid,epwd指定用户email及密码(已经设置了Email或Name，不能用ID登录.)
 	email="3333333333@163.com"      #设置切换登陆的用户名
@@ -374,14 +374,17 @@ def main():
 		else :
 			print(u'书库没有书')
 		if len(done_list)>0 :
-			mailto = mailto + " " cookie.get('kindle_email')  + " " + cookie.get('uemail')
+			mailto = mailto + " " + cookie.get('kindle_email')  + " " + cookie.get('uemail')
 			mailto = mailto.strip().replace(" ",",").replace(",,", ",")
 			print(u'通过邮件发送到: %s(Building....)' % mailto)
 			for i in done_list.strip().split(' ') :
 				send_mail(mailto, books_list[int(i)]['filename'], loc)
 		if len(done_list)>0 :
 			#删除下载成功的书
-			delete_book("0," + done_list.strip().replace(' ',','), cookie , proxy)
+			delete_list = "0,"
+			for i in done_list.strip().split(' ') :
+				delete_list = delete_list + books_list[int(i)]['bid'] + ","
+			delete_book(delete_list[:-1], cookie , proxy)
 	print(u'程序完成')
 	
 if __name__ == '__main__':
