@@ -32,9 +32,9 @@ def choiceIP(ip_pool):
 	proxy={'http':ip,'https':ip}
 	return proxy
 
-def getSessionid():
+def getSessionid(proxy):
 	login_url = u'http://cn.epubee.com'
-	req = requests.get(login_url, headers=headers)
+	req = requests.get(login_url, headers=headers, proxies=proxy)
 	str = req.headers['Set-Cookie']
 	name, value = str.split(';')[0].split('=')
 	return value
@@ -52,8 +52,8 @@ def update_cookies(data_json):
 
 def getCookie(proxy):
 	print(u'开始获取cookie')
-	cookie['ASP.NET_SessionId'] = getSessionid()
-	url = u'http://cn.epubee.com//keys/genid_with_localid.asmx/genid_with_localid'
+	cookie['ASP.NET_SessionId'] = getSessionid(proxy)
+	url = u'http://cn.epubee.com/keys/genid_with_localid.asmx/genid_with_localid'
 	data = {'localid': ''}
 	try:
 		response = requests.post(url, json=data, cookies=cookie, proxies=proxy, timeout=10)
